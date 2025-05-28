@@ -1,0 +1,6 @@
+gpxpy
+folium
+matplotlib
+cartopy
+imageio
+imageio-ffmpeg
