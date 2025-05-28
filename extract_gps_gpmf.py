@@ -97,7 +97,7 @@ def process_video(video_path):
     print(f"  → Archivos generados: {output_csv.name}, {output_gpx.name}\n")
 
 def main():
-    root_dir = Path("/Users/mhidalgorg/Desktop/tests")
+    root_dir = Path("/Users/rgdevment/Desktop/tests")
     mp4_files = list(root_dir.rglob("*.mp4"))
 
     for video_path in mp4_files:
