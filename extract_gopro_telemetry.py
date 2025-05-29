@@ -18,13 +18,10 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
     files_processed_gpx = 0
     files_found = 0
 
-    # Check if gpx.fmt exists if a specific path is given, or assume it's findable by ExifTool
     if not os.path.basename(gpx_format_file) == gpx_format_file: # if it's a path
         if not os.path.exists(gpx_format_file):
             print(f"WARNING: GPX format file '{gpx_format_file}' not found. GPX generation may fail if it's not in ExifTool's path or current directory.")
     else:
-        # If just "gpx.fmt", assume it's in the current dir or ExifTool will find it.
-        # For robustness, you might want to ensure it's copied to CWD or provide full path.
         if not os.path.exists(gpx_format_file):
              print(f"INFO: '{gpx_format_file}' not found in script directory. Assuming ExifTool can find it elsewhere (e.g., its own directory or current working directory of execution).")
 
@@ -42,7 +39,10 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
                     exiftool_executable,
                     "-ee",
                     "-n",
-                    "-G1",           # Mantenemos -G para ver los grupos
+                    "-b",
+                    "-G1",
+                    "-x", "SourceFile",
+                    "-x", "System:Directory",
                     "-json",
                     mp4_filepath
                 ]
@@ -70,35 +70,45 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
 
                 # --- GPX File Generation ---
                 output_gpx_filepath = os.path.join(foldername, f"{base_filename}.gpx")
+
+                expected_gpx_output_path = f"{output_gpx_filepath}.gpx"
+
                 cmd_gpx = [
-                    exiftool_executable,
-                    "-p",
-                    gpx_format_file, # Use the variable for the format file path
-                    "-ee",
-                    mp4_filepath
+                    "gopro2gpx",
+                    "--gpx",
+                    "--csv",
+                    "--kml",
+                    "-s",              # Para skip bad points
+                    mp4_filepath,
+                    output_gpx_filepath
                 ]
 
-                print(f"Processing for GPX: {mp4_filepath}...")
+                print(f"Processing for GPX/CSV with gopro2gpx: {mp4_filepath}...")
                 try:
-                    # ExifTool with -p redirects its output to stdout, so we capture it.
+
                     result_gpx = subprocess.run(cmd_gpx, capture_output=True, text=True, check=True, encoding='utf-8', errors='ignore')
 
-                    if result_gpx.stdout.strip(): # Check if there's actual content
-                        with open(output_gpx_filepath, 'w', encoding='utf-8') as f_gpx:
-                            f_gpx.write(result_gpx.stdout)
-                        print(f"  SUCCESS: GPX file saved to {output_gpx_filepath}")
+                    # Verificamos si el archivo GPX fue creado
+                    if os.path.exists(expected_gpx_output_path):
+                        print(f"  SUCCESS: GPX file saved to {expected_gpx_output_path}")
                         files_processed_gpx += 1
                     else:
-                        print(f"  WARNING: ExifTool produced empty GPX output for {mp4_filepath}. (Is GPS data present?)")
+                        print(f"  WARNING: gopro2gpx ran but GPX file not found at {expected_gpx_output_path}.")
+                        if result_gpx.stdout:
+                            print(f"  gopro2gpx stdout: {result_gpx.stdout[:500]}")
+                        if result_gpx.stderr:
+                            print(f"  gopro2gpx stderr: {result_gpx.stderr[:500]}")
 
                 except subprocess.CalledProcessError as e:
-                    print(f"  ERROR: ExifTool failed (GPX generation) for {mp4_filepath}.")
-                    # print(f"  Stderr: {e.stderr[:200]}...") # Uncomment for more error details
-                except FileNotFoundError: # Should have been caught by JSON part
-                    print(f"CRITICAL ERROR: ExifTool executable not found at '{exiftool_executable}'.")
+                    print(f"  ERROR: gopro2gpx failed for {mp4_filepath}.")
+                    print(f"  Return code: {e.returncode}")
+                    print(f"  Stdout: {e.stdout[:500] if e.stdout else 'None'}")
+                    print(f"  Stderr: {e.stderr[:500] if e.stderr else 'None'}")
+                except FileNotFoundError:
+                    print("CRITICAL ERROR: gopro2gpx command not found. Is it installed and in your PATH?")
                     return
-                except Exception as e_gpx: # Catch any other unexpected errors during GPX part
-                    print(f"  An unexpected error occurred during GPX generation for {mp4_filepath}: {e_gpx}")
+                except Exception as e_gpx:
+                    print(f"  An unexpected error occurred during gopro2gpx execution for {mp4_filepath}: {e_gpx}")
 
 
     print("\n--- Summary ---")
@@ -112,10 +122,6 @@ if __name__ == "__main__":
     target_gopro_folder = "/Users/mhidalgorg/Desktop/tests"
     exiftool_path = "exiftool"
 
-    # Path to your gpx.fmt file.
-    # If gpx.fmt is in the same directory as this Python script, you can just use "gpx.fmt".
-    # Otherwise, provide the full path to gpx.fmt.
-    # Ejemplo: "C:\\ruta\\a\\gpx.fmt" o "/home/usuario/scripts/gpx.fmt"
     gpx_format_filepath = "gpx.fmt"
     # --- END CONFIGURATION ---
 

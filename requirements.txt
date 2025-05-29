@@ -4,3 +4,4 @@ matplotlib
 cartopy
 imageio
 imageio-ffmpeg
+gpmf

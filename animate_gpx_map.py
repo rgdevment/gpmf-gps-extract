@@ -163,12 +163,12 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
         traceback.print_exc()
 
 if __name__ == "__main__":
-    mi_archivo_gpx = "/Users/rgdevment/Desktop/tests/9/GH010005_joined.gpx" #
-    nombre_video_salida = "/Users/rgdevment/Desktop/tests/9/mi_animacion_gpx_sincronizada.mp4"
+    mi_archivo_gpx = "/Users//Desktop/tests/9/GH010005_joined.gpx.gpx" #
+    nombre_video_salida = "/Users//Desktop/tests/9/mi_animacion_gpx_sincronizada.mp4"
 
     intervalo_ms = 50
     puntos_gpx_por_frame = 5
-    segundos_para_empezar_dibujo = 120
+    segundos_para_empezar_dibujo = 0
 
     animar_ruta_gpx_sincronizada(mi_archivo_gpx,
                                     archivo_salida_video=nombre_video_salida,
