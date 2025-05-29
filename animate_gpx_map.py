@@ -1,4 +1,3 @@
-# Filename: animar_gpx_lotes_mapa_refinado.py
 import gpxpy
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -6,21 +5,8 @@ from datetime import timedelta
 import contextily as cx
 from pyproj import Transformer
 import numpy as np
-import os # <--- NUEVO: para operaciones del sistema de archivos
+import os
 
-# Variable para almacenar la última altura mostrada.
-# Se gestionará dentro de animar_ruta_gpx_sincronizada para cada archivo.
-# No es necesario que sea global a nivel de módulo para el procesamiento por lotes
-# si se maneja adecuadamente dentro de la función de animación.
-
-# (La función animar_ruta_gpx_sincronizada va aquí sin cambios estructurales mayores,
-# solo asegurándonos que el estado de la altura se reinicia bien.
-# Por brevedad, no la repetiré entera aquí, pero la incluiré en el bloque final)
-
-# ... (Aquí iría la función animar_ruta_gpx_sincronizada completa, como la teníamos) ...
-# Solo me aseguraré que la inicialización de la última altura mostrada sea local a su lógica.
-
-# --- Definición de animar_ruta_gpx_sincronizada (copiada y verificada) ---
 # Variable para almacenar la última altura mostrada y forzar la primera actualización
 # Usamos una lista para que sea mutable y modificable dentro de update_animation
 # Se reiniciará al principio de cada llamada a animar_ruta_gpx_sincronizada
@@ -33,7 +19,9 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                                  segundos_inicio_dibujo=0,
                                  map_source=cx.providers.OpenStreetMap.Mapnik,
                                  ventana_promedio_altura_puntos=5,
-                                 umbral_actualizacion_altura_m=0.5
+                                 umbral_actualizacion_altura_m=0.5,
+                                 grosor_linea=4,
+                                 tamano_punto=10
                                  ):
     global _local_ultima_elevacion_mostrada_texto
     _local_ultima_elevacion_mostrada_texto[0] = None
@@ -45,7 +33,7 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
 
         if not gpx.tracks or not gpx.tracks[0].segments:
             print(f"No se encontraron tracks/segmentos en {ruta_archivo_gpx}.")
-            return False # Indicar fallo
+            return False
 
         all_points_raw_latlon = []
         for segment in gpx.tracks[0].segments:
@@ -66,6 +54,10 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
             all_points_projected.append((x, y, time, ele))
 
         _all_points_data_for_animation = all_points_projected
+
+        if not _all_points_data_for_animation: # Chequeo adicional por si la transformación falla o filtra todo
+            print(f"No quedaron puntos después de la proyección para {ruta_archivo_gpx}.")
+            return False
 
         tiempo_primer_punto_gpx = _all_points_data_for_animation[0][2]
         tiempo_ultimo_punto_gpx = _all_points_data_for_animation[-1][2]
@@ -99,12 +91,12 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
             margin_y = (max_y - min_y) * 0.05 if max_y != min_y else 100
             ax.set_xlim(min_x - margin_x, max_x + margin_x)
             ax.set_ylim(min_y - margin_y, max_y + margin_y)
-        elif _all_points_data_for_animation: # Si no hay visibles pero hay datos generales
+        elif _all_points_data_for_animation:
             all_x = [p[0] for p in _all_points_data_for_animation]
             all_y = [p[1] for p in _all_points_data_for_animation]
             ax.set_xlim(min(all_x) - 100, max(all_x) + 100)
             ax.set_ylim(min(all_y) - 100, max(all_y) + 100)
-        else: # No hay datos en absoluto
+        else:
             print("No hay datos para establecer límites del mapa.")
             plt.close(fig)
             return False
@@ -118,8 +110,9 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
 
         ax.set_axis_off()
 
-        line, = ax.plot([], [], lw=2, color='dodgerblue', alpha=0.8, zorder=5)
-        current_point_marker, = ax.plot([], [], 'o', color='red', markersize=7, markeredgecolor='white', zorder=6)
+        line, = ax.plot([], [], lw=grosor_linea, color='dodgerblue', alpha=0.8, zorder=5)
+        current_point_marker, = ax.plot([], [], 'o', color='red', markersize=tamano_punto, markeredgecolor='white', zorder=6)
+
         elevation_text = ax.text(0.02, 0.98, '', transform=ax.transAxes, fontsize=10,
                                  color='black', verticalalignment='top',
                                  bbox=dict(boxstyle='round,pad=0.3', fc='white', alpha=0.7), zorder=7)
@@ -141,7 +134,7 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
 
             if duracion_real_gpx_s > 0 and num_total_frames_animacion > 0:
                 intervalo_ms_calculado = (duracion_real_gpx_s * 1000.0) / num_total_frames_animacion
-                min_intervalo_ms = 20
+                min_intervalo_ms = 20 # Minimum interval in ms (equivalent to 50 FPS)
                 if intervalo_ms_calculado < min_intervalo_ms:
                     print(f"ADVERTENCIA (archivo: {os.path.basename(ruta_archivo_gpx)}): Intervalo ({intervalo_ms_calculado:.2f} ms) muy bajo. Usando {min_intervalo_ms} ms.")
                     intervalo_ms_final_animacion = min_intervalo_ms
@@ -151,12 +144,10 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                 print(f"Para sincronizar ({os.path.basename(ruta_archivo_gpx)}): {num_total_frames_animacion} frames, intervalo: {intervalo_ms_final_animacion:.2f} ms, FPS: {fps_video_final:.2f}.")
             elif duracion_real_gpx_s <= 0:
                  print(f"Duración GPX cero o negativa ({os.path.basename(ruta_archivo_gpx)}). Usando intervalo de referencia.")
-            # else num_total_frames_animacion es 0, ya manejado
         elif len(_all_points_data_for_animation) == 1:
              print(f"Solo 1 punto en GPX ({os.path.basename(ruta_archivo_gpx)}). Usando intervalo de referencia.")
-        # else len(_all_points_data_for_animation) == 0, ya manejado
 
-        def init_animation_batch(): # Renombrado para evitar conflicto si estuviera en scope global
+        def init_animation_batch():
             global _local_ultima_elevacion_mostrada_texto
             line.set_data([], [])
             current_point_marker.set_data([],[])
@@ -164,7 +155,7 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
             _local_ultima_elevacion_mostrada_texto[0] = None
             return line, current_point_marker, elevation_text
 
-        def update_animation_batch(frame_idx_anim): # Renombrado
+        def update_animation_batch(frame_idx_anim):
             global _local_ultima_elevacion_mostrada_texto
             idx_ultimo_gpx_a_considerar = min( (frame_idx_anim + 1) * puntos_gpx_por_frame_anim -1 , len(_all_points_data_for_animation) - 1)
 
@@ -189,7 +180,7 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                 if _local_ultima_elevacion_mostrada_texto[0] is None or \
                    abs(elevacion_suavizada_actual - _local_ultima_elevacion_mostrada_texto[0]) >= umbral_actualizacion_altura_m:
                     actualizar_texto_altura = True
-            elif _local_ultima_elevacion_mostrada_texto[0] is not None:
+            elif _local_ultima_elevacion_mostrada_texto[0] is not None: # Si antes había altura y ahora no, actualizar a N/A
                  actualizar_texto_altura = True
 
             if actualizar_texto_altura:
@@ -198,65 +189,71 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                     _local_ultima_elevacion_mostrada_texto[0] = elevacion_suavizada_actual
                 else:
                     elevation_text.set_text('Altura: N/A')
-                    _local_ultima_elevacion_mostrada_texto[0] = None
+                    _local_ultima_elevacion_mostrada_texto[0] = None # Resetear para futura comparación
 
             if tiempo_punto_gpx_actual >= tiempo_para_empezar_a_dibujar:
                 puntos_linea_x = []
                 puntos_linea_y = []
+                # Asegurarse de que idx_primer_punto_a_dibujar no sea mayor que idx_ultimo_gpx_a_considerar
                 for i in range(idx_primer_punto_a_dibujar, idx_ultimo_gpx_a_considerar + 1):
                     puntos_linea_x.append(_all_points_data_for_animation[i][0])
                     puntos_linea_y.append(_all_points_data_for_animation[i][1])
                 line.set_data(puntos_linea_x, puntos_linea_y)
                 current_point_marker.set_data([x_actual_marcador], [y_actual_marcador])
-                current_point_marker.set_alpha(1)
-            else:
-                line.set_data([], [])
-                current_point_marker.set_data([x_actual_marcador], [y_actual_marcador])
-                current_point_marker.set_alpha(0.3)
+                current_point_marker.set_alpha(1) # Visible
+            else: # Puntos antes del inicio del dibujo
+                line.set_data([], []) # No dibujar línea aún
+                current_point_marker.set_data([x_actual_marcador], [y_actual_marcador]) # Mostrar el punto
+                current_point_marker.set_alpha(0.3) # Pero hacerlo semitransparente
 
-            if num_total_frames_animacion > 0 and frame_idx_anim % max(1, (num_total_frames_animacion // 20)) == 0 :
+            # Progress printing
+            if num_total_frames_animacion > 0 and frame_idx_anim % max(1, (num_total_frames_animacion // 20)) == 0 : # Print progress roughly 20 times
                  print(f"  Procesando frame ({os.path.basename(ruta_archivo_gpx)}): {frame_idx_anim+1}/{num_total_frames_animacion}")
 
             return line, current_point_marker, elevation_text
 
         print(f"Creando animación para {os.path.basename(ruta_archivo_gpx)} con {num_total_frames_animacion} frames totales...")
         ani = animation.FuncAnimation(fig, update_animation_batch, frames=num_total_frames_animacion,
-                                      init_func=init_animation_batch, blit=True,
-                                      interval=intervalo_ms_final_animacion,
-                                      repeat=False)
+                                      init_func=init_animation_batch, blit=True, # blit=True para optimizar
+                                      interval=intervalo_ms_final_animacion, # Intervalo entre frames en milisegundos
+                                      repeat=False) # No repetir la animación
         try:
             print(f"Guardando animación en {archivo_salida_video} con {fps_video_final:.2f} FPS...")
+            # Usar un writer que soporte transparencia si es necesario, ej. ffmpeg con codec adecuado
             ani.save(
                 archivo_salida_video,
                 fps=fps_video_final,
-                savefig_kwargs={
-                    'transparent': True,
-                    'facecolor': 'none',
+                savefig_kwargs={ # Argumentos para guardar cada frame
+                    'transparent': True, # Fondo transparente si el formato de video lo soporta
+                    'facecolor': 'none', # Sin color de fondo para la figura
                 },
-                progress_callback=lambda cf, tf: print(f"  Guardando frame ({os.path.basename(ruta_archivo_gpx)}) {cf+1}/{tf}...") if tf > 0 and cf % max(1, (tf // 10)) == 0 else None
+                progress_callback=lambda cf, tf: print(f"  Guardando frame ({os.path.basename(ruta_archivo_gpx)}) {cf+1}/{tf}...") if tf > 0 and cf % max(1, (tf // 10)) == 0 else None # Print progress roughly 10 times
             )
             print(f"¡Animación guardada exitosamente en {archivo_salida_video}!")
             if num_total_frames_animacion > 0 and fps_video_final > 0:
                 duracion_video_esperada_s = num_total_frames_animacion / fps_video_final
                 print(f"Duración esperada del video ({os.path.basename(ruta_archivo_gpx)}): {duracion_video_esperada_s:.2f} segundos.")
-            return True
+            return True # Indicar éxito
         except Exception as e:
             print(f"Error guardando la animación para {os.path.basename(ruta_archivo_gpx)}: {e}")
         finally:
-            plt.close(fig)
+            plt.close(fig) # Asegurarse de cerrar la figura para liberar memoria
 
     except FileNotFoundError:
         print(f"Error: No se encontró el archivo GPX en la ruta: {ruta_archivo_gpx}")
     except Exception as e:
         print(f"Ocurrió un error general procesando {ruta_archivo_gpx}: {e}")
         import traceback
-        traceback.print_exc()
+        traceback.print_exc() # Imprime el stack trace completo para depuración
 
-    return False
+    return False # Indicar fallo
 
 def procesar_directorio_gpx(directorio_raiz,
                             intervalo_ref, puntos_frame, seg_inicio, map_src,
-                            ventana_altura, umbral_altura):
+                            ventana_altura, umbral_altura,
+                            # NUEVOS PARÁMETROS para pasar a la función de animación
+                            grosor_linea_lote, tamano_punto_lote
+                            ):
     """
     Escanea un directorio y sus subdirectorios en busca de archivos .gpx,
     y los procesa para generar videos de telemetría.
@@ -272,8 +269,9 @@ def procesar_directorio_gpx(directorio_raiz,
                 archivos_gpx_encontrados += 1
                 ruta_completa_gpx = os.path.join(dirpath, filename)
 
+                # Crear nombre de video de salida en la misma carpeta que el GPX
                 nombre_base_gpx = os.path.splitext(filename)[0]
-                nombre_video_salida = f"{nombre_base_gpx}-telemetry.mp4"
+                nombre_video_salida = f"{nombre_base_gpx}-gps.mp4" # Puedes cambiar el sufijo si quieres
                 ruta_completa_video = os.path.join(dirpath, nombre_video_salida)
 
                 print("\n====================================================================")
@@ -289,7 +287,9 @@ def procesar_directorio_gpx(directorio_raiz,
                         segundos_inicio_dibujo=seg_inicio,
                         map_source=map_src,
                         ventana_promedio_altura_puntos=ventana_altura,
-                        umbral_actualizacion_altura_m=umbral_altura
+                        umbral_actualizacion_altura_m=umbral_altura,
+                        grosor_linea=grosor_linea_lote,
+                        tamano_punto=tamano_punto_lote
                     ):
                     archivos_procesados_ok +=1
                 else:
@@ -309,12 +309,21 @@ def procesar_directorio_gpx(directorio_raiz,
 if __name__ == "__main__":
 
     directorio_raiz_a_procesar = "/Volumes/LaCie/GoPro"
+
     intervalo_referencia_ms_lote = 50
     puntos_gpx_por_frame_lote = 5
     segundos_para_empezar_dibujo_lote = 0
-    map_provider_lote = cx.providers.CartoDB.Positron # Un mapa claro y eficiente
-    ventana_puntos_altura_lote = 10
+    # map_provider_lote = cx.providers.CartoDB.Positron
+    map_provider_lote = cx.providers.OpenStreetMap.Mapnik
+    # map_provider_lote = cx.providers.Esri.WorldImagery # Satelital
+
+    # Parámetros para el suavizado y actualización de la altura
+    ventana_puntos_altura_lote = 10     # Número de puntos GPX para promediar la altura
     umbral_cambio_altura_lote = 25.0
+    grosor_linea_principal_lote = 12     # Grosor de la línea de la ruta (ej: 4 o 5)
+    tamano_punto_actual_lote = 16       # Tamaño del marcador del punto actual (ej: 10 o 12)
+
+    # --- Fin de la Configuración ---
 
     if not os.path.isdir(directorio_raiz_a_procesar):
         print(f"Error: El directorio especificado '{directorio_raiz_a_procesar}' no existe o no es un directorio.")
@@ -327,5 +336,7 @@ if __name__ == "__main__":
             seg_inicio=segundos_para_empezar_dibujo_lote,
             map_src=map_provider_lote,
             ventana_altura=ventana_puntos_altura_lote,
-            umbral_altura=umbral_cambio_altura_lote
+            umbral_altura=umbral_cambio_altura_lote,
+            grosor_linea_lote=grosor_linea_principal_lote,
+            tamano_punto_lote=tamano_punto_actual_lote
         )
