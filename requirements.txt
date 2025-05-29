@@ -5,3 +5,5 @@ cartopy
 imageio
 imageio-ffmpeg
 gpmf
+pyproj
+contextily

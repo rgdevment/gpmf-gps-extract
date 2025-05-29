@@ -69,15 +69,13 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
                     return
 
                 # --- GPX File Generation ---
-                output_gpx_filepath = os.path.join(foldername, f"{base_filename}.gpx")
+                output_gpx_filepath = os.path.join(foldername, f"{base_filename}")
 
                 expected_gpx_output_path = f"{output_gpx_filepath}.gpx"
 
                 cmd_gpx = [
                     "gopro2gpx",
                     "--gpx",
-                    "--csv",
-                    "--kml",
                     "-s",              # Para skip bad points
                     mp4_filepath,
                     output_gpx_filepath
@@ -119,7 +117,7 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
 
 if __name__ == "__main__":
     # --- CONFIGURATION ---
-    target_gopro_folder = "/Users/mhidalgorg/Desktop/tests"
+    target_gopro_folder = "/Volumes/LaCie/GoPro"
     exiftool_path = "exiftool"
 
     gpx_format_filepath = "gpx.fmt"
