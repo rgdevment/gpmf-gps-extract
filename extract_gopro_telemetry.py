@@ -34,39 +34,39 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
                 base_filename = os.path.splitext(filename)[0]
 
                 # --- JSON Telemetry Extraction ---
-                output_json_filepath = os.path.join(foldername, f"{base_filename}_telemetry.json")
-                cmd_json = [
-                    exiftool_executable,
-                    "-ee",
-                    "-n",
-                    "-b",
-                    "-G1",
-                    "-x", "SourceFile",
-                    "-x", "System:Directory",
-                    "-json",
-                    mp4_filepath
-                ]
-
-                print(f"\nProcessing for JSON: {mp4_filepath}...")
-                try:
-                    result_json = subprocess.run(cmd_json, capture_output=True, text=True, check=True, encoding='utf-8')
-                    try:
-                        metadata_list = json.loads(result_json.stdout)
-                        if metadata_list and isinstance(metadata_list, list) and len(metadata_list) > 0:
-                            with open(output_json_filepath, 'w', encoding='utf-8') as f_json:
-                                json.dump(metadata_list[0], f_json, indent=4)
-                            print(f"  SUCCESS: JSON telemetry saved to {output_json_filepath}")
-                            files_processed_json += 1
-                        else:
-                            print(f"  WARNING: No valid metadata structure in ExifTool JSON output for {mp4_filepath}")
-                    except json.JSONDecodeError:
-                        print(f"  ERROR: Could not decode JSON from ExifTool for {mp4_filepath}")
-                except subprocess.CalledProcessError as _:
-                    print(f"  ERROR: ExifTool failed (JSON extraction) for {mp4_filepath}.")
-                    # print(f"  Stderr: {e.stderr[:200]}...") # Uncomment for more error details
-                except FileNotFoundError:
-                    print(f"CRITICAL ERROR: ExifTool executable not found at '{exiftool_executable}'.")
-                    return
+#                output_json_filepath = os.path.join(foldername, f"{base_filename}_telemetry.json")
+#                cmd_json = [
+#                    exiftool_executable,
+#                    "-ee",
+#                    "-n",
+#                    "-b",
+#                    "-G1",
+#                    "-x", "SourceFile",
+#                    "-x", "System:Directory",
+#                    "-json",
+#                    mp4_filepath
+#                ]
+#
+#                print(f"\nProcessing for JSON: {mp4_filepath}...")
+#                try:
+#                    result_json = subprocess.run(cmd_json, capture_output=True, text=True, check=True, encoding='utf-8')
+#                    try:
+#                        metadata_list = json.loads(result_json.stdout)
+#                        if metadata_list and isinstance(metadata_list, list) and len(metadata_list) > 0:
+#                            with open(output_json_filepath, 'w', encoding='utf-8') as f_json:
+#                                json.dump(metadata_list[0], f_json, indent=4)
+#                            print(f"  SUCCESS: JSON telemetry saved to {output_json_filepath}")
+#                            files_processed_json += 1
+#                        else:
+#                            print(f"  WARNING: No valid metadata structure in ExifTool JSON output for {mp4_filepath}")
+#                    except json.JSONDecodeError:
+#                        print(f"  ERROR: Could not decode JSON from ExifTool for {mp4_filepath}")
+#                except subprocess.CalledProcessError as _:
+#                    print(f"  ERROR: ExifTool failed (JSON extraction) for {mp4_filepath}.")
+#                    # print(f"  Stderr: {e.stderr[:200]}...") # Uncomment for more error details
+#                except FileNotFoundError:
+#                    print(f"CRITICAL ERROR: ExifTool executable not found at '{exiftool_executable}'.")
+#                    return
 
                 # --- GPX File Generation ---
                 output_gpx_filepath = os.path.join(foldername, f"{base_filename}")
@@ -117,7 +117,7 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
 
 if __name__ == "__main__":
     # --- CONFIGURATION ---
-    target_gopro_folder = "/Volumes/LaCie/GoPro"
+    target_gopro_folder = "/Users/mhidalgorg/Desktop/tests"
     exiftool_path = "exiftool"
 
     gpx_format_filepath = "gpx.fmt"

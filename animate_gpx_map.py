@@ -314,7 +314,7 @@ def procesar_directorio_gpx(directorio_raiz,
 
 if __name__ == "__main__":
 
-    directorio_raiz_a_procesar = "/Volumes/LaCie/GoPro"
+    directorio_raiz_a_procesar = "/Users/mhidalgorg/Desktop/tests/9"
     intervalo_referencia_ms_lote = 50
     puntos_gpx_por_frame_lote = 5
     segundos_para_empezar_dibujo_lote = 0
