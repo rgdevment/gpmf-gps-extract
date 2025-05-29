@@ -117,7 +117,7 @@ def extract_telemetry_and_gpx(root_folder, exiftool_executable="exiftool", gpx_f
 
 if __name__ == "__main__":
     # --- CONFIGURATION ---
-    target_gopro_folder = "/Users/mhidalgorg/Desktop/tests"
+    target_gopro_folder = "/Volumes/LaCie/GoPro"
     exiftool_path = "exiftool"
 
     gpx_format_filepath = "gpx.fmt"

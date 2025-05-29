@@ -35,8 +35,8 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                                  ventana_promedio_altura_puntos=5,
                                  umbral_actualizacion_altura_m=0.5
                                  ):
-    global _local_ultima_elevacion_mostrada_texto # Necesario para modificarla
-    _local_ultima_elevacion_mostrada_texto[0] = None # Reiniciar para cada llamada
+    global _local_ultima_elevacion_mostrada_texto
+    _local_ultima_elevacion_mostrada_texto[0] = None
 
     try:
         print(f"Leyendo archivo GPX: {ruta_archivo_gpx}")
@@ -232,8 +232,6 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                 savefig_kwargs={
                     'transparent': True,
                     'facecolor': 'none',
-                    'bbox_inches': 'tight',
-                    'pad_inches': 0
                 },
                 progress_callback=lambda cf, tf: print(f"  Guardando frame ({os.path.basename(ruta_archivo_gpx)}) {cf+1}/{tf}...") if tf > 0 and cf % max(1, (tf // 10)) == 0 else None
             )
@@ -241,19 +239,18 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
             if num_total_frames_animacion > 0 and fps_video_final > 0:
                 duracion_video_esperada_s = num_total_frames_animacion / fps_video_final
                 print(f"Duración esperada del video ({os.path.basename(ruta_archivo_gpx)}): {duracion_video_esperada_s:.2f} segundos.")
-            return True # Indicar éxito
+            return True
         except Exception as e:
             print(f"Error guardando la animación para {os.path.basename(ruta_archivo_gpx)}: {e}")
-            # No imprimir traceback aquí, ya se hará en la función de lote si es necesario.
         finally:
-            plt.close(fig) # Asegurarse de cerrar la figura para liberar memoria
+            plt.close(fig)
 
     except FileNotFoundError:
         print(f"Error: No se encontró el archivo GPX en la ruta: {ruta_archivo_gpx}")
     except Exception as e:
         print(f"Ocurrió un error general procesando {ruta_archivo_gpx}: {e}")
         import traceback
-        traceback.print_exc() # Imprimir traceback para errores inesperados en la función principal
+        traceback.print_exc()
 
     return False
 
@@ -284,9 +281,6 @@ def procesar_directorio_gpx(directorio_raiz,
                 print(f"    Video de salida: {ruta_completa_video}")
                 print("====================================================================")
 
-                # Reiniciar el estado de la última elevación para cada archivo
-                # (esto ya se hace al inicio de animar_ruta_gpx_sincronizada)
-
                 if animar_ruta_gpx_sincronizada(
                         ruta_archivo_gpx=ruta_completa_gpx,
                         archivo_salida_video=ruta_completa_video,
@@ -314,7 +308,7 @@ def procesar_directorio_gpx(directorio_raiz,
 
 if __name__ == "__main__":
 
-    directorio_raiz_a_procesar = "/Users/mhidalgorg/Desktop/tests/9"
+    directorio_raiz_a_procesar = "/Volumes/LaCie/GoPro"
     intervalo_referencia_ms_lote = 50
     puntos_gpx_por_frame_lote = 5
     segundos_para_empezar_dibujo_lote = 0
