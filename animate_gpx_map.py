@@ -1,10 +1,8 @@
 # Filename: animar_gpx_matplotlib_sincronizado.py
 import gpxpy
-import gpxpy.gpx
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                                  archivo_salida_video="ruta_animada_sincro.mp4",
@@ -60,7 +58,7 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
                 break
         else: # Si todos los puntos son antes del tiempo_para_empezar_a_dibujar (ej. segundos_inicio_dibujo es muy grande)
             if segundos_inicio_dibujo > 0 :
-                 print(f"ADVERTENCIA: Todos los puntos están antes del tiempo de inicio de dibujo especificado. Se dibujará una animación en blanco o solo el último estado.")
+                 print("ADVERTENCIA: Todos los puntos están antes del tiempo de inicio de dibujo especificado. Se dibujará una animación en blanco o solo el último estado.")
                  # Podríamos optar por no dibujar nada o dibujar el último punto si la duración del skip es mayor que la del track
                  idx_primer_punto_a_dibujar = len(all_points_raw) # No dibujará nada
 
@@ -164,18 +162,13 @@ def animar_ruta_gpx_sincronizada(ruta_archivo_gpx,
         import traceback
         traceback.print_exc()
 
-# --- EJEMPLO DE CÓMO USARLO ---
 if __name__ == "__main__":
-    mi_archivo_gpx = "/Users/mhidalgorg/Desktop/tests/9/GH010005_joined.gpx" # ¡¡¡CAMBIA ESTO!!!
-    nombre_video_salida = "/Users/mhidalgorg/Desktop/tests/9/mi_animacion_gpx_sincronizada.mp4"
+    mi_archivo_gpx = "/Users/rgdevment/Desktop/tests/9/GH010005_joined.gpx" #
+    nombre_video_salida = "/Users/rgdevment/Desktop/tests/9/mi_animacion_gpx_sincronizada.mp4"
 
     intervalo_ms = 50
-    puntos_gpx_por_frame = 5 # Cuántos puntos GPX se procesan para avanzar la animación un frame
-                             # Ajusta esto para controlar la "velocidad" de la animación en relación a los datos GPX
-
-    # Segundos desde el inicio del track GPX ANTES de empezar a DIBUJAR la línea.
-    # La animación SÍ correrá durante este tiempo, pero la línea no aparecerá.
-    segundos_para_empezar_dibujo = 0 # El valor que te funcionó antes, ajústalo según necesites
+    puntos_gpx_por_frame = 5
+    segundos_para_empezar_dibujo = 120
 
     animar_ruta_gpx_sincronizada(mi_archivo_gpx,
                                     archivo_salida_video=nombre_video_salida,
